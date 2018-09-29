@@ -54,6 +54,6 @@ fn main() {
         pattern = format!("^{}$", pattern);
     }
 
-    let files = list_files(dir, &filter_args).unwrap();
-    rename(&pattern, repl, files, &rename_args).unwrap();
+    let files = list_files(dir, &filter_args);
+    rename(&pattern, repl, files, &rename_args);
 }

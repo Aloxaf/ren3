@@ -20,12 +20,11 @@
 
 
 extern crate regex;
-extern crate failure;
 
-use failure::Error;
 use regex::RegexBuilder;
 use std::fs;
-use std::fs::DirEntry;
+use std::path::PathBuf;
+use std::process;
 
 pub struct FilterArgs {
     pub dir_only: bool,
@@ -40,73 +39,77 @@ pub struct RenameArgs {
     pub brief: bool,
 }
 
-pub fn list_files(dir: &str, args: &FilterArgs) -> Result<Vec<DirEntry>, Error>  {
-    let paths = fs::read_dir(dir)?;
+pub fn list_files(dir: &str, args: &FilterArgs) -> Vec<PathBuf>  {
     let mut ret = Vec::new();
+    let paths = fs::read_dir(dir).unwrap_or_else(|e| {
+        eprintln!("Unable to open directory '{}': {}", dir, e);
+        process::exit(1);
+    });
+
     for path in paths {
         let path = path.unwrap();
+        let path = path.path();
 
-        let file = path.path();
-        if !args.hidden_file && file.file_name().unwrap().to_str().unwrap().starts_with(".") {
+        if (!args.hidden_file && path.file_name().unwrap().to_str().unwrap().starts_with("."))
+            || (args.dir_only && !path.is_dir())
+            || (args.file_only && !path.is_file()) {
             continue
-        } else if args.dir_only && file.is_dir() {
-            ret.push(path);
-        } else if args.file_only && file.is_file() {
-            ret.push(path);
-        } else {
-            ret.push(path);
         }
 
-        if args.recursive && file.is_dir() {
-            ret.extend(list_files(file.to_str().unwrap(), args).unwrap());
-        }
+        ret.push(path.clone());
 
+        if args.recursive && path.is_dir() {
+            ret.extend(list_files(path.to_str().unwrap(), args));
+        }
     }
-    Ok(ret)
+
+    ret
 }
 
 
-pub fn rename(pattern: &str, repl: &str, files: Vec<DirEntry>, args: &RenameArgs) -> Result<(), Error> {
+pub fn rename(pattern: &str, repl: &str, files: Vec<PathBuf>, args: &RenameArgs) {
 
     let re = if args.case_insensitive {
         RegexBuilder::new(pattern)
             .case_insensitive(true)
-            .build()?
+            .build()
     } else {
-        RegexBuilder::new(pattern).build()?
+        RegexBuilder::new(pattern).build()
     };
 
-    for path in files {
-        let old_path = path.path();
-        let mut new_path = old_path.clone();
+    let re = re.unwrap_or_else(|e| {
+        eprintln!("{}", e);
+        process::exit(1);
+    });
 
-        if !re.is_match(old_path.file_name().unwrap().to_str().unwrap()) {
+    for old_path in files {
+        let old_file_name = old_path.file_name().unwrap().to_str().unwrap();
+
+        if !re.is_match(old_file_name) {
             continue;
         }
 
-        let new_file_name = re.replace(old_path.file_name().unwrap().to_str().unwrap(), repl);
+        let new_file_name = re.replace(old_file_name, repl);
+
+        let mut new_path = old_path.clone();
         new_path.set_file_name(&new_file_name.to_string());
 
         let old_name = old_path.to_str().unwrap();
         let new_name = new_path.to_str().unwrap();
 
         if args.apply {
-            match fs::rename(old_name, new_name) {
-                Err(e) => {
-                    eprintln!("Failed to rename {}: {}", old_name, e);
-                    continue;
-                },
-                _ => (),
+            if let Err(e) = fs::rename(old_name, new_name) {
+                eprintln!("Failed to rename '{}': {}", old_name, e);
+                continue;
             }
         }
 
         if args.brief {
             println!("{}\t-> {}",
-                     old_path.file_name().unwrap().to_str().unwrap(),
-                     new_path.file_name().unwrap().to_str().unwrap());
+                     old_file_name,
+                     new_file_name);
         } else {
             println!("{}\t-> {}", old_name, new_name);
         }
     }
-    Ok(())
 }
