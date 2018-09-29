@@ -35,7 +35,10 @@ fn main() {
 
     let mut pattern = matches.value_of("pattern").unwrap().to_string();
     let repl = matches.value_of("repl").unwrap();
-    let dir = matches.value_of("dir").unwrap_or(".");
+    let dirs = match matches.values_of("dir") {
+        Some(values) => values.collect::<Vec<_>>(),
+        None => vec!["."],
+    };
 
     let filter_args = FilterArgs {
         dir_only: option_exist("dir-only"),
@@ -54,6 +57,12 @@ fn main() {
         pattern = format!("^{}$", pattern);
     }
 
-    let files = list_files(dir, &filter_args);
-    rename(&pattern, repl, files, &rename_args);
+    for dir in dirs {
+        let files = list_files(dir, &filter_args);
+        rename(&pattern, repl, files, &rename_args);
+    }
+
+    if !rename_args.apply {
+        println!("\n\nTHIS IS DEMO MODE.\nUSE '-f' OPTION TO APPLY CHANGES.");
+    }
 }
