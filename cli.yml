@@ -1,0 +1,47 @@
+name: ren3
+version: "0.1.0"
+author: Aloxaf <aloxafx@gmail.com>
+about: rename file with regular expressions
+args:
+- pattern:
+    help: a regular expression
+    required: true
+    index: 1
+- repl:
+    help: replace string
+    required: true
+    index: 2
+- dir:
+    help: directories to rename
+    multiple: true
+- recursive:
+    short: r
+    long: recursive
+    help: rename subdirectories recursively
+- dir-only:
+    short: D
+    long: directory-only
+    help: only rename directories
+- file-only:
+    short: F
+    long: file-only
+    help: only rename files
+- brief:
+    short: b
+    long: brief
+    help: only display base name
+- strict-mode:
+    short: s
+    long: strict-mode
+    help: equal to add "^" "$"
+- case-insensitive:
+    short: i
+    long: case-insensitive
+- all:
+    short: a
+    long: all
+    help: rename all files, include hidden files
+- force:
+    short: f
+    long: force
+    help: apply changes
