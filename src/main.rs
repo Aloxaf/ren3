@@ -22,7 +22,7 @@
 extern crate ren3;
 
 use clap::App;
-use ren3::{list_files, rename, FilterArgs, RenameArgs};
+use ren3::{list_and_rename_files, Args, SedRegex};
 
 
 fn main() {
@@ -39,23 +39,21 @@ fn main() {
         None => vec!["."],
     };
 
-    let filter_args = FilterArgs {
+    let args = Args {
         dir_only: option_exist("dir-only"),
         file_only: option_exist("file-only"),
         recursive: option_exist("recursive"),
-    };
-
-    let rename_args = RenameArgs {
         apply: option_exist("force"),
         brief: option_exist("brief"),
     };
 
+    let re = SedRegex::new(expression);
+
     for dir in dirs {
-        let files = list_files(dir, &filter_args);
-        rename(expression, files, &rename_args);
+        list_and_rename_files(&re, dir, &args);
     }
 
-    if !rename_args.apply {
+    if !args.apply {
         println!("\n\nTHIS IS DEMO MODE.\nUSE '-f' OPTION TO APPLY CHANGES.");
     }
 }

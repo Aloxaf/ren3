@@ -28,19 +28,15 @@ use std::process;
 
 use sedregex::{split_for_replace, ErrorKind};
 
-pub struct FilterArgs {
+pub struct Args {
     pub dir_only: bool,
     pub file_only: bool,
     pub recursive: bool,
-}
-
-pub struct RenameArgs {
     pub apply: bool,
     pub brief: bool,
 }
 
-
-struct SedRegex<'a> {
+pub struct SedRegex<'a> {
     re: regex::Regex,
     rep: Cow<'a, str>,
     global: bool,
@@ -78,13 +74,13 @@ impl<'a> SedRegex<'a> {
     }
 }
 
-pub fn list_files(dir: &str, args: &FilterArgs) -> Vec<PathBuf>  {
-    let mut ret = Vec::new();
+pub fn list_and_rename_files(re: &SedRegex, dir: &str, args: &Args) {
+
     let paths = match fs::read_dir(dir) {
         Ok(paths) => paths,
         Err(e) => {
             eprintln!("Unable to open directory '{}': {}", dir, e);
-            return vec![];
+            return;
         }
     };
 
@@ -93,52 +89,43 @@ pub fn list_files(dir: &str, args: &FilterArgs) -> Vec<PathBuf>  {
         let path = path.path();
 
         if args.recursive && path.is_dir() {
-            ret.extend(list_files(path.to_str().unwrap(), args));
+            list_and_rename_files(re, path.to_str().unwrap(), args);
         }
 
         if (args.dir_only && !path.is_dir()) || (args.file_only && !path.is_file()) {
             continue
         }
 
-        ret.push(path.clone());
+        rename_file(&re, &path, args);
     }
-
-    ret
 }
 
+fn rename_file(re: &SedRegex, file: &PathBuf, args: &Args) {
+    let old_path = file;
+    let old_file_name = old_path.file_name().unwrap().to_str().unwrap();
 
-pub fn rename(expression: &str, files: Vec<PathBuf>, args: &RenameArgs) {
+    if !re.is_match(old_file_name) {
+        return;
+    }
 
-    let re = SedRegex::new(expression);
+    let new_file_name = re.replace(old_file_name);
 
-    for old_path in files {
-        let old_file_name = old_path.file_name().unwrap().to_str().unwrap();
+    let mut new_path = old_path.clone();
+    new_path.set_file_name(&new_file_name.to_string());
 
-        if !re.is_match(old_file_name) {
-            continue;
+    let old_name = old_path.to_str().unwrap();
+    let new_name = new_path.to_str().unwrap();
+
+    if args.apply {
+        if let Err(e) = fs::rename(old_name, new_name) {
+            eprintln!("Failed to rename '{}': {}", old_name, e);
+            return;
         }
+    }
 
-        let new_file_name = re.replace(old_file_name);
-
-        let mut new_path = old_path.clone();
-        new_path.set_file_name(&new_file_name.to_string());
-
-        let old_name = old_path.to_str().unwrap();
-        let new_name = new_path.to_str().unwrap();
-
-        if args.apply {
-            if let Err(e) = fs::rename(old_name, new_name) {
-                eprintln!("Failed to rename '{}': {}", old_name, e);
-                continue;
-            }
-        }
-
-        if args.brief {
-            println!("{}\t-> {}",
-                     old_file_name,
-                     new_file_name);
-        } else {
-            println!("{}\t-> {}", old_name, new_name);
-        }
+    if args.brief {
+        println!("{}\t-> {}", old_file_name, new_file_name);
+    } else {
+        println!("{}\t-> {}", old_name, new_name);
     }
 }
