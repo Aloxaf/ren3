@@ -25,12 +25,11 @@ use std::fs;
 use std::path::PathBuf;
 use std::process;
 
-use sedregex::split_for_replace;
+use sedregex::{split_for_replace, ErrorKind};
 
 pub struct FilterArgs {
     pub dir_only: bool,
     pub file_only: bool,
-    pub hidden_file: bool,
     pub recursive: bool,
 }
 
@@ -41,26 +40,27 @@ pub struct RenameArgs {
 
 pub fn list_files(dir: &str, args: &FilterArgs) -> Vec<PathBuf>  {
     let mut ret = Vec::new();
-    let paths = fs::read_dir(dir).unwrap_or_else(|e| {
-        eprintln!("Unable to open directory '{}': {}", dir, e);
-        process::exit(1);
-    });
+    let paths = match fs::read_dir(dir) {
+        Ok(paths) => paths,
+        Err(e) => {
+            eprintln!("Unable to open directory '{}': {}", dir, e);
+            return vec![];
+        }
+    };
 
     for path in paths {
         let path = path.unwrap();
         let path = path.path();
 
-        if (!args.hidden_file && path.file_name().unwrap().to_str().unwrap().starts_with("."))
-            || (args.dir_only && !path.is_dir())
-            || (args.file_only && !path.is_file()) {
+        if args.recursive && path.is_dir() {
+            ret.extend(list_files(path.to_str().unwrap(), args));
+        }
+
+        if (args.dir_only && !path.is_dir()) || (args.file_only && !path.is_file()) {
             continue
         }
 
         ret.push(path.clone());
-
-        if args.recursive && path.is_dir() {
-            ret.extend(list_files(path.to_str().unwrap(), args));
-        }
     }
 
     ret
@@ -70,11 +70,14 @@ pub fn list_files(dir: &str, args: &FilterArgs) -> Vec<PathBuf>  {
 pub fn rename(expression: &str, files: Vec<PathBuf>, args: &RenameArgs) {
 
     let replace_data = split_for_replace(expression).unwrap_or_else(|e| {
-        eprintln!("{:?}", e);
+        eprintln!("regex split error: {:?}", e);
         process::exit(1);
     });
+
     let re = replace_data.build_regex().unwrap_or_else(|e| {
-        eprintln!("{:?}", e);
+        if let ErrorKind::RegexError(e) = e {
+            eprintln!("{}", e);
+        }
         process::exit(1);
     });
 

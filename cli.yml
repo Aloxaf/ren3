@@ -26,10 +26,6 @@ args:
     short: b
     long: brief
     help: only display base name
-- all:
-    short: a
-    long: all
-    help: rename all files, include hidden files
 - force:
     short: f
     long: force

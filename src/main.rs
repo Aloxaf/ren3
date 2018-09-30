@@ -42,7 +42,6 @@ fn main() {
     let filter_args = FilterArgs {
         dir_only: option_exist("dir-only"),
         file_only: option_exist("file-only"),
-        hidden_file: option_exist("all"),
         recursive: option_exist("recursive"),
     };
 
