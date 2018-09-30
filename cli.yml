@@ -3,14 +3,10 @@ version: "0.1.0"
 author: Aloxaf <aloxafx@gmail.com>
 about: rename file with regular expressions
 args:
-- pattern:
-    help: a regular expression
+- expression:
+    help: sed-like expression
     required: true
     index: 1
-- repl:
-    help: replace string
-    required: true
-    index: 2
 - dir:
     help: directories to rename
     multiple: true
@@ -30,13 +26,6 @@ args:
     short: b
     long: brief
     help: only display base name
-- strict-mode:
-    short: s
-    long: strict-mode
-    help: equal to add "^" "$"
-- case-insensitive:
-    short: i
-    long: case-insensitive
 - all:
     short: a
     long: all

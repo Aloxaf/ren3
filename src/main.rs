@@ -33,8 +33,7 @@ fn main() {
         matches.occurrences_of(s) == 1
     };
 
-    let mut pattern = matches.value_of("pattern").unwrap().to_string();
-    let repl = matches.value_of("repl").unwrap();
+    let expression = matches.value_of("expression").unwrap();
     let dirs = match matches.values_of("dir") {
         Some(values) => values.collect::<Vec<_>>(),
         None => vec!["."],
@@ -48,18 +47,13 @@ fn main() {
     };
 
     let rename_args = RenameArgs {
-        case_insensitive: option_exist("case-insensitive"),
         apply: option_exist("force"),
         brief: option_exist("brief"),
     };
 
-    if option_exist("strict-mode") {
-        pattern = format!("^{}$", pattern);
-    }
-
     for dir in dirs {
         let files = list_files(dir, &filter_args);
-        rename(&pattern, repl, files, &rename_args);
+        rename(expression, files, &rename_args);
     }
 
     if !rename_args.apply {

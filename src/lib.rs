@@ -19,12 +19,13 @@
 // THE SOFTWARE.
 
 
-extern crate regex;
+extern crate sedregex;
 
-use regex::RegexBuilder;
 use std::fs;
 use std::path::PathBuf;
 use std::process;
+
+use sedregex::split_for_replace;
 
 pub struct FilterArgs {
     pub dir_only: bool,
@@ -34,7 +35,6 @@ pub struct FilterArgs {
 }
 
 pub struct RenameArgs {
-    pub case_insensitive: bool,
     pub apply: bool,
     pub brief: bool,
 }
@@ -67,18 +67,14 @@ pub fn list_files(dir: &str, args: &FilterArgs) -> Vec<PathBuf>  {
 }
 
 
-pub fn rename(pattern: &str, repl: &str, files: Vec<PathBuf>, args: &RenameArgs) {
+pub fn rename(expression: &str, files: Vec<PathBuf>, args: &RenameArgs) {
 
-    let re = if args.case_insensitive {
-        RegexBuilder::new(pattern)
-            .case_insensitive(true)
-            .build()
-    } else {
-        RegexBuilder::new(pattern).build()
-    };
-
-    let re = re.unwrap_or_else(|e| {
-        eprintln!("{}", e);
+    let replace_data = split_for_replace(expression).unwrap_or_else(|e| {
+        eprintln!("{:?}", e);
+        process::exit(1);
+    });
+    let re = replace_data.build_regex().unwrap_or_else(|e| {
+        eprintln!("{:?}", e);
         process::exit(1);
     });
 
@@ -89,7 +85,11 @@ pub fn rename(pattern: &str, repl: &str, files: Vec<PathBuf>, args: &RenameArgs)
             continue;
         }
 
-        let new_file_name = re.replace(old_file_name, repl);
+        let new_file_name = if replace_data.flags.is_global() {
+            re.replace_all(old_file_name, replace_data.with.as_ref())
+        } else {
+            re.replace(old_file_name, replace_data.with.as_ref())
+        };
 
         let mut new_path = old_path.clone();
         new_path.set_file_name(&new_file_name.to_string());
