@@ -10,7 +10,7 @@ Inspired by [ren2](http://www.lomont.org/Software/)
 > ls
 foo-1.jpg foo2.jpg
 
-> ren3 -f '.*(\d+\.jpg)' 'bar-$1'
+> ren3 's/.*(\d+\.jpg)/bar-$1'
 ./foo2.jpg      -> ./bar-2.jpg
 ./foo-1.jpg     -> ./bar-1.jpg
 

@@ -117,7 +117,7 @@ dependencies = [
 [[package]]
 name = "sedregex"
 version = "0.2.1"
-source = "git+https://gitlab.com/Aloxaf/sedregex#f9e09899017487338ed6b9b914ce5e21ced0b238"
+source = "git+https://gitlab.com/Aloxaf/sedregex#d93c1b0328baacfbc68c91103caeed0470a8eafd"
 dependencies = [
  "regex 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
