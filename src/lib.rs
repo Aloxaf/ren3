@@ -18,9 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-
+extern crate regex;
 extern crate sedregex;
 
+use std::borrow::Cow;
 use std::fs;
 use std::path::PathBuf;
 use std::process;
@@ -36,6 +37,45 @@ pub struct FilterArgs {
 pub struct RenameArgs {
     pub apply: bool,
     pub brief: bool,
+}
+
+
+struct SedRegex<'a> {
+    re: regex::Regex,
+    rep: Cow<'a, str>,
+    global: bool,
+}
+
+impl<'a> SedRegex<'a> {
+    pub fn new(expression: &str) -> SedRegex {
+        let replace_data = split_for_replace(expression).unwrap_or_else(|e| {
+            eprintln!("regex split error: {:?}", e);
+            process::exit(1);
+        });
+        let re = replace_data.build_regex().unwrap_or_else(|e| {
+            if let ErrorKind::RegexError(e) = e {
+                eprintln!("{}", e);
+            }
+            process::exit(1);
+        });
+        SedRegex {
+            re,
+            rep: replace_data.with,
+            global: replace_data.flags.is_global()
+        }
+    }
+
+    pub fn replace<'t>(&self, text: &'t str) -> Cow<'t, str> {
+        if self.global {
+            self.re.replace_all(text, self.rep.as_ref())
+        } else {
+            self.re.replace(text, self.rep.as_ref())
+        }
+    }
+
+    pub fn is_match(&self, text: &str) -> bool {
+        self.re.is_match(text)
+    }
 }
 
 pub fn list_files(dir: &str, args: &FilterArgs) -> Vec<PathBuf>  {
@@ -69,17 +109,7 @@ pub fn list_files(dir: &str, args: &FilterArgs) -> Vec<PathBuf>  {
 
 pub fn rename(expression: &str, files: Vec<PathBuf>, args: &RenameArgs) {
 
-    let replace_data = split_for_replace(expression).unwrap_or_else(|e| {
-        eprintln!("regex split error: {:?}", e);
-        process::exit(1);
-    });
-
-    let re = replace_data.build_regex().unwrap_or_else(|e| {
-        if let ErrorKind::RegexError(e) = e {
-            eprintln!("{}", e);
-        }
-        process::exit(1);
-    });
+    let re = SedRegex::new(expression);
 
     for old_path in files {
         let old_file_name = old_path.file_name().unwrap().to_str().unwrap();
@@ -88,11 +118,7 @@ pub fn rename(expression: &str, files: Vec<PathBuf>, args: &RenameArgs) {
             continue;
         }
 
-        let new_file_name = if replace_data.flags.is_global() {
-            re.replace_all(old_file_name, replace_data.with.as_ref())
-        } else {
-            re.replace(old_file_name, replace_data.with.as_ref())
-        };
+        let new_file_name = re.replace(old_file_name);
 
         let mut new_path = old_path.clone();
         new_path.set_file_name(&new_file_name.to_string());
