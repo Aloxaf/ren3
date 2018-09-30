@@ -4,6 +4,8 @@ Do file renaming using regular expressions.
 
 Inspired by [ren2](http://www.lomont.org/Software/)
 
+[![Linux build status](https://travis-ci.org/Aloxaf/ren3.svg)](https://travis-ci.org/Aloxaf/ren3)
+
 ## Install
 
 ```bash
