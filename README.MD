@@ -37,9 +37,9 @@ ARGS:
 > ls
 foo-1.jpg foo2.jpg
 
-> ren3 's/.*(\d+\.jpg)/bar-$1'
-./foo2.jpg      -> ./bar-2.jpg
-./foo-1.jpg     -> ./bar-1.jpg
+> ren3 's/.*(\d+\.jpg)/bar-$1' -f
+[OK] ./foo2.jpg      -> ./bar-2.jpg
+[OK] ./foo-1.jpg     -> ./bar-1.jpg
 
 > ls
 bar-1.jpg  bar-2.jpg
