@@ -14,3 +14,4 @@ license = "MIT"
 regex = "^1.0.5"
 clap = {version = "^2.32.0", features = ["yaml"]}
 sedregex = {git = "https://gitlab.com/Aloxaf/sedregex"}
+colored = "1.6.1"

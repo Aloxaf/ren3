@@ -1,4 +1,4 @@
-# ren3 (WIP)
+# ren3
 
 Do file renaming using regular expressions.
 

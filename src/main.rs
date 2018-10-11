@@ -19,9 +19,11 @@
 // THE SOFTWARE.
 
 #[macro_use] extern crate clap;
+extern crate colored;
 extern crate ren3;
 
 use clap::App;
+use colored::*;
 use ren3::{list_and_rename_files, Args, SedRegex};
 
 
@@ -54,6 +56,6 @@ fn main() {
     }
 
     if !args.apply {
-        println!("\n\nTHIS IS DEMO MODE.\nUSE '-f' OPTION TO APPLY CHANGES.");
+        println!("{}", "\n\nTHIS IS DEMO MODE.\nUSE '-f' OPTION TO APPLY CHANGES.".bright_yellow().bold());
     }
 }
