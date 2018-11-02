@@ -20,7 +20,6 @@
 
 extern crate colored;
 extern crate regex;
-extern crate sedregex;
 
 use colored::*;
 use std::borrow::Cow;
@@ -30,7 +29,9 @@ use std::ffi::OsString;
 use std::io;
 use std::process;
 
-use sedregex::{split_for_replace, ErrorKind};
+pub mod sedregex;
+
+use crate::sedregex::{split_regex, ErrorKind};
 
 #[derive(Debug)]
 enum Error {
@@ -46,15 +47,15 @@ pub struct Args {
     pub brief: bool,
 }
 
-pub struct SedRegex<'a> {
+pub struct SedRegex {
     re: regex::Regex,
-    rep: Cow<'a, str>,
+    rep: String,
     global: bool,
 }
 
-impl<'a> SedRegex<'a> {
+impl SedRegex {
     pub fn new(expression: &str) -> SedRegex {
-        let replace_data = split_for_replace(expression).unwrap_or_else(|e| {
+        let replace_data = split_regex(expression).unwrap_or_else(|e| {
             eprintln!("regex split error: {:?}", e);
             process::exit(1);
         });
@@ -66,17 +67,17 @@ impl<'a> SedRegex<'a> {
         });
         SedRegex {
             re,
-            rep: replace_data.with,
-            global: replace_data.flags.is_global()
+            rep: replace_data.replace_str,
+            global: replace_data.flag_global,
         }
     }
 
     #[inline]
     pub fn replace<'t>(&self, text: &'t str) -> Cow<'t, str> {
         if self.global {
-            self.re.replace_all(text, self.rep.as_ref())
+            self.re.replace_all::<&str>(text, self.rep.as_ref())
         } else {
-            self.re.replace(text, self.rep.as_ref())
+            self.re.replace::<&str>(text, self.rep.as_ref())
         }
     }
 

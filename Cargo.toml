@@ -9,9 +9,9 @@ readme = "README.MD"
 keywords = ["regex", "rename"]
 categories = ["command-line-utilities"]
 license = "MIT"
+edition = "2018"
 
 [dependencies]
 regex = "^1.0.5"
 clap = {version = "^2.32.0", features = ["yaml"]}
-sedregex = {git = "https://gitlab.com/Aloxaf/sedregex"}
 colored = "1.6.1"
