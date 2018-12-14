@@ -12,6 +12,6 @@ license = "MIT"
 edition = "2018"
 
 [dependencies]
-regex = "^1.0.5"
-clap = {version = "^2.32.0", features = ["yaml"]}
+regex = "1.1.0"
+clap = { version = "2.32.0", features = ["yaml"] }
 colored = "1.6.1"

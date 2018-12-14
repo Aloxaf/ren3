@@ -17,23 +17,15 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-#[macro_use] extern crate clap;
-extern crate colored;
-extern crate ren3;
-
-use clap::App;
+use clap::{load_yaml, App};
 use colored::*;
 use ren3::{list_and_rename_files, Args, SedRegex};
-
 
 fn main() {
     let yaml = load_yaml!("../cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
 
-    let option_exist = |s: &str| -> bool {
-        matches.occurrences_of(s) == 1
-    };
+    let option_exist = |s: &str| -> bool { matches.occurrences_of(s) == 1 };
 
     let expression = matches.value_of("expression").unwrap();
     let dirs = match matches.values_of("dir") {
@@ -56,6 +48,11 @@ fn main() {
     }
 
     if !args.apply {
-        println!("{}", "\n\nTHIS IS DEMO MODE.\nUSE '-f' OPTION TO APPLY CHANGES.".bright_yellow().bold());
+        println!(
+            "{}",
+            "\n\nTHIS IS DEMO MODE.\nUSE '-f' OPTION TO APPLY CHANGES."
+                .bright_yellow()
+                .bold()
+        );
     }
 }

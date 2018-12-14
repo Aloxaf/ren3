@@ -1,4 +1,4 @@
-use regex::{Regex, RegexBuilder, Error};
+use regex::{Error, Regex, RegexBuilder};
 
 #[derive(Debug, PartialEq)]
 pub enum ErrorKind {
@@ -22,17 +22,16 @@ impl RegexData {
         RegexBuilder::new(&self.pattern_str)
             .case_insensitive(self.flag_case_insensitive)
             .build()
-            .map_err(|e| ErrorKind::RegexError(e))
+            .map_err(ErrorKind::RegexError)
     }
 }
 
 pub fn split_regex(expr: &str) -> Result<RegexData, ErrorKind> {
     let expr = expr.chars().collect::<Vec<_>>();
     if expr[0] != 's' {
-        return Err(ErrorKind::UnknownCommand(expr[0]))
+        return Err(ErrorKind::UnknownCommand(expr[0]));
     }
     let delimiter = expr[1];
-
 
     let mut segments = vec![];
     let mut segment = vec![];

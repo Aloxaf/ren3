@@ -17,16 +17,12 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-extern crate colored;
-extern crate regex;
-
 use colored::*;
 use std::borrow::Cow;
-use std::fs;
-use std::path::PathBuf;
 use std::ffi::OsString;
+use std::fs;
 use std::io;
+use std::path::PathBuf;
 use std::process;
 
 pub mod sedregex;
@@ -88,7 +84,6 @@ impl SedRegex {
 }
 
 pub fn list_and_rename_files(re: &SedRegex, dir: &str, args: &Args) {
-
     let paths = match fs::read_dir(dir) {
         Ok(paths) => paths,
         Err(e) => {
@@ -106,14 +101,18 @@ pub fn list_and_rename_files(re: &SedRegex, dir: &str, args: &Args) {
         }
 
         if (args.dir_only && !path.is_dir()) || (args.file_only && !path.is_file()) {
-            continue
+            continue;
         }
 
-        rename_file(&re, &path, args).unwrap_or_else(|e| {
-            match e {
-                Error::UnknownFileName(filename) => eprintln!("{}", format!("[ERROR] Unknown file name {:?}", filename).bright_red()),
-                Error::RenameError(old, new, err) => eprintln!("{}", format!("[ERROR] Failed to rename {} -> {}: {}", old, new, err).bright_red()),
-            }
+        rename_file(&re, &path, args).unwrap_or_else(|e| match e {
+            Error::UnknownFileName(filename) => eprintln!(
+                "{}",
+                format!("[ERROR] Unknown file name {:?}", filename).bright_red()
+            ),
+            Error::RenameError(old, new, err) => eprintln!(
+                "{}",
+                format!("[ERROR] Failed to rename {} -> {}: {}", old, new, err).bright_red()
+            ),
         });
     }
 }
@@ -123,7 +122,11 @@ fn rename_file(re: &SedRegex, file: &PathBuf, args: &Args) -> Result<(), Error> 
     let old_path = file;
     let old_file_name = match old_path.file_name().unwrap().to_str() {
         Some(value) => value,
-        None => return Err(Error::UnknownFileName(old_path.file_name().unwrap().to_os_string())),
+        None => {
+            return Err(Error::UnknownFileName(
+                old_path.file_name().unwrap().to_os_string(),
+            ));
+        }
     };
 
     if !re.is_match(old_file_name) {
@@ -140,14 +143,24 @@ fn rename_file(re: &SedRegex, file: &PathBuf, args: &Args) -> Result<(), Error> 
 
     if args.apply {
         if let Err(e) = fs::rename(old_full_name, new_full_name) {
-            return Err(Error::RenameError(old_full_name.to_string(), new_full_name.to_string(), e));
+            return Err(Error::RenameError(
+                old_full_name.to_string(),
+                new_full_name.to_string(),
+                e,
+            ));
         }
     }
 
     if args.brief {
-        println!("{}", format!("[OK] {}\t-> {}", old_file_name, new_file_name).bright_green());
+        println!(
+            "{}",
+            format!("[OK] {}\t-> {}", old_file_name, new_file_name).bright_green()
+        );
     } else {
-        println!("{}", format!("[OK] {}\t-> {}", old_full_name, new_full_name).bright_green());
+        println!(
+            "{}",
+            format!("[OK] {}\t-> {}", old_full_name, new_full_name).bright_green()
+        );
     }
     Ok(())
 }
