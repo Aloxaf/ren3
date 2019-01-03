@@ -1,15 +1,13 @@
-# ren3 (WIP)
+# ren3 [![Linux build status](https://travis-ci.org/Aloxaf/ren3.svg)](https://travis-ci.org/Aloxaf/ren3) [![](https://img.shields.io/crates/v/ren3.svg)](https://crates.io/crates/ren3)
 
 Do file renaming using regular expressions.
 
 Inspired by [ren2](http://www.lomont.org/Software/)
 
-[![Linux build status](https://travis-ci.org/Aloxaf/ren3.svg)](https://travis-ci.org/Aloxaf/ren3)
-
 ## Install
 
 ```bash
-cargo install --git https://github.com/Aloxaf/ren3
+cargo install ren3
 ```
 
 ## Usage
