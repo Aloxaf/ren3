@@ -1,8 +1,77 @@
+# Based on the "trust" template v0.1.2
+# https://github.com/japaric/trust/tree/v0.1.2
+
+dist: trusty
 language: rust
-rust:
-- stable
-- beta
-- nightly
+services: docker
+sudo: required
+
+env:
+  global:
+    - CRATE_NAME=ren3
+
 matrix:
-  allow_failures:
-  - rust: nightly
+  include:
+    # Linux
+    - env: TARGET=i686-unknown-linux-gnu
+    - env: TARGET=i686-unknown-linux-musl
+    - env: TARGET=x86_64-unknown-linux-gnu
+    - env: TARGET=x86_64-unknown-linux-musl
+
+    # OSX
+    - env: TARGET=i686-apple-darwin
+      os: osx
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+
+    # Windows
+    - env: TARGET=x86_64-pc-windows-gnu
+
+    # Testing other channels
+    - env: TARGET=x86_64-unknown-linux-gnu
+      rust: nightly
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+      rust: nightly
+
+before_install:
+  - set -e
+  - rustup self update
+
+install:
+  - sh ci/install.sh
+  - source ~/.cargo/env || true
+
+script:
+  - bash ci/script.sh
+
+after_script: set +e
+
+before_deploy:
+  - sh ci/before_deploy.sh
+
+deploy:
+  api_key:
+    secure: OF7oc0A+0r6YJ17T814kjQe0Uw7JfxRIHvMD/bxI7xnOQZK5pvkYr9628P6B0NJzCGq/PqEkSfhwzhqH/oefBMCTitjnnQi1T+1X/yAnq4JsIPSXoKFeGxXqjM821Tc7in5BdfdgabQxCidrHoxprJw1aFcqxuEwdGn5nTltgjY/uTqeFELtC3NYvWAHlVk9QFtH/bdubIoUfR0X3DhbME8s9JvoCwwiiJNMSrLbF0DibDlIcC/LR+2w5KWma5OXSrb8e3/vQ1E4dYBgLblMyHnYoGX3CIE1qfWVETm076XK0uu5rq3TqSM6x2597C9Oy8HwFNbgJwMAbMpUy0B0d7hlpklIElB4kbYtKTGmANrGjhI5GdMdk1q/UI9p9MXVbC9oLKeH1JyofQdqh6sdrs33IHFc5hK7tFcnbzBJ3rJoiFr+/WdJn4Q0NGIWiE3Zl1Nifh48fF6b2F2lE9U+Tsry+edCLILGpwQmupNPg9Wu6f8nxuLFwda9VMO8I3bDtSzFeQMsEFOPQK8hpHI1IZH2AgR0WsV92CdrbJFgG2ivZYMW9wxMCbrhDc8mdcNEsS3c686Hj6jyWfgNaePoII81QTBaqlBPnM9Lb6JV/xht4a1TQwzZJXOUWlF5OizrpPGMzxOmVIjBennQTS8EyMSAcXEKQnhGwK+uAmwU2Qo=
+  file_glob: true
+  file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
+  on:
+    condition: $TRAVIS_RUST_VERSION = stable
+    tags: true
+  provider: releases
+  skip_cleanup: true
+
+cache: cargo
+before_cache:
+  # Travis can't cache files that are not readable by "others"
+  - chmod -R a+r $HOME/.cargo
+
+branches:
+  only:
+    # release tags
+    - /^v\d+\.\d+\.\d+.*$/
+    - master
+
+notifications:
+  email:
+    on_success: never
